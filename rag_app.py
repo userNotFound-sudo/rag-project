@@ -25,28 +25,45 @@ def root():
 def health():
     return {"status": "ok", "api_key_loaded": True}
 
-# Week 5: Gemini connectivity test scaffold.
+# Week 5/6: Gemini endpoint with multi-step execution.
 # Note: All Gemini logic lives inside this function.
 @app.get("/test-gemini")
 def test_gemini():
     try:
         # Import inside the function to keep Week 4 scaffolding unchanged.
-        # The older `google.generativeai` SDK is deprecated and may not support
-        # current Gemini model names for all keys; use the newer `google.genai`.
         from google import genai
 
         client = genai.Client(api_key=api_key)
-        prompt = "Explain what a large language model is in one paragraph."
+        model = "gemini-2.5-flash"
+        topic = "what a large language model is"
 
-        # Create a model and generate content with a simple hardcoded prompt.
-        result = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
+        # Step 1: Generate a short outline (intermediate result).
+        outline_prompt = (
+            f"Create a short bullet-point outline (3-5 points) explaining {topic}."
         )
+        outline_result = client.models.generate_content(
+            model=model,
+            contents=outline_prompt,
+        )
+        outline = getattr(outline_result, "text", None)
+        if not outline:
+            raise RuntimeError("Gemini returned an empty outline in step 1.")
 
-        response_text = getattr(result, "text", None)
+        # Safe server-side inspection only; not returned to the client.
+        print(f"[test_gemini] Step 1 outline generated ({len(outline)} chars)")
+
+        # Step 2: Expand the outline into a full response.
+        expand_prompt = (
+            f"Using this outline:\n{outline}\n\n"
+            f"Write one clear paragraph explaining {topic}."
+        )
+        final_result = client.models.generate_content(
+            model=model,
+            contents=expand_prompt,
+        )
+        response_text = getattr(final_result, "text", None)
         if not response_text:
-            raise RuntimeError("Gemini returned an empty response.")
+            raise RuntimeError("Gemini returned an empty response in step 2.")
 
         return {"response": response_text}
     except Exception:

@@ -34,3 +34,27 @@ What I learned from the Gemini docs
 Use the SDK to create a model/client, call generate_content with a prompt, and read the text from the response.
 Model names must match what your API key supports (e.g. gemini-2.5-flash, not always gemini-1.5-flash).
 Handle errors without exposing your API key.
+
+## Week 6: Multi-step execution in `/test-gemini`
+
+### Multi-step flow
+
+The `/test-gemini` endpoint now runs two sequential Gemini calls inside `test_gemini()`:
+
+1. **Step 1 (outline):** Ask Gemini to create a short bullet-point outline about what a large language model is. The result is stored in a variable and logged server-side only.
+2. **Step 2 (expand):** Send a second prompt that includes the outline from step 1 and ask Gemini to write one full paragraph. Only this final answer is returned to the client as JSON.
+
+### What each step does
+
+- **Step 1** plans the answer structure (outline).
+- **Step 2** uses that plan to produce the final, expanded response.
+
+### Why the steps are separated
+
+Splitting the work into two steps makes the output more controlled: the model first decides what to cover, then writes the full answer based on that plan. This same pattern (plan → execute, draft → refine) is used in real AI systems and will support later RAG and validation work.
+
+### Challenges / open questions
+
+- Model names can differ by API key, so a supported model must be chosen (e.g. `gemini-2.5-flash`).
+- Multi-step calls take longer and use more API quota than a single call.
+- Intermediate results are kept server-side for now; a future version could expose them for debugging or add a validation step.
