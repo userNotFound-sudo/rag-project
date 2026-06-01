@@ -37,24 +37,25 @@ Handle errors without exposing your API key.
 
 ## Week 6: Multi-step execution in `/test-gemini`
 
-### Multi-step flow
+### Description of the multi-step flow
 
-The `/test-gemini` endpoint now runs two sequential Gemini calls inside `test_gemini()`:
+`GET /test-gemini` runs two sequential Gemini calls inside `test_gemini()` in `rag_app.py`:
 
-1. **Step 1 (outline):** Ask Gemini to create a short bullet-point outline about what a large language model is. The result is stored in a variable and logged server-side only.
-2. **Step 2 (expand):** Send a second prompt that includes the outline from step 1 and ask Gemini to write one full paragraph. Only this final answer is returned to the client as JSON.
+1. **Step 1 — Outline:** Ask Gemini for a short bullet-point outline about what a large language model is. Save the result in `outline`. Log it server-side only (not returned to the client).
+2. **Step 2 — Expand:** Send a second prompt that includes the outline from step 1 and ask for one full paragraph. Return only this as JSON: `{"response": "..."}`.
 
 ### What each step does
 
-- **Step 1** plans the answer structure (outline).
-- **Step 2** uses that plan to produce the final, expanded response.
+- **Step 1:** Plans the answer (bullet outline).
+- **Step 2:** Writes the final paragraph using that outline.
 
 ### Why the steps are separated
 
-Splitting the work into two steps makes the output more controlled: the model first decides what to cover, then writes the full answer based on that plan. This same pattern (plan → execute, draft → refine) is used in real AI systems and will support later RAG and validation work.
+Step 2 depends on step 1’s output. Splitting planning and writing gives more control and matches real AI patterns (outline → expand) used later for RAG and validation.
 
-### Challenges / open questions
+### Challenges and open questions
 
-- Model names can differ by API key, so a supported model must be chosen (e.g. `gemini-2.5-flash`).
-- Multi-step calls take longer and use more API quota than a single call.
+- Model names vary by API key (`gemini-2.5-flash` works for this project).
+- Two calls are slower and use more quota than one.
 - Intermediate results are kept server-side for now; a future version could expose them for debugging or add a validation step.
+- On Windows, use `python -m uvicorn rag_app:app --reload` if `uvicorn.exe` is blocked.
