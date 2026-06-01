@@ -34,3 +34,27 @@ What I learned from the Gemini docs
 Use the SDK to create a model/client, call generate_content with a prompt, and read the text from the response.
 Model names must match what your API key supports (e.g. gemini-2.5-flash, not always gemini-1.5-flash).
 Handle errors without exposing your API key.
+
+## Week 6: Multi-step execution in `/test-gemini`
+
+### Description of the multi-step flow
+
+`GET /test-gemini` runs two sequential Gemini calls inside `test_gemini()` in `rag_app.py`:
+
+1. **Step 1 — Outline:** Ask Gemini for a short bullet-point outline about what a large language model is. Save the result in `outline`. Log it server-side only (not returned to the client).
+2. **Step 2 — Expand:** Send a second prompt that includes the outline from step 1 and ask for one full paragraph. Return only this as JSON: `{"response": "..."}`.
+3. 
+### What each step does
+- **Step 1:** Plans the answer (bullet outline).
+- **Step 2:** Writes the final paragraph using that outline.
+- 
+### Why the steps are separated
+
+Step 2 depends on step 1’s output. Splitting planning and writing gives more control and matches real AI patterns (outline → expand) used later for RAG and validation.
+
+### Challenges and open questions
+
+- Model names vary by API key (`gemini-2.5-flash` works for this project).
+- Two calls are slower and use more quota than one.
+- Outline is only logged on the server for now.
+- On Windows, use `python -m uvicorn rag_app:app --reload` if `uvicorn.exe` is blocked.
