@@ -59,3 +59,34 @@ Step 2 depends on step 1’s output. Splitting planning and writing gives more c
 - Two calls are slower and use more quota than one.
 - Intermediate results are kept server-side for now; a future version could expose them for debugging or add a validation step.
 - On Windows, use `python -m uvicorn rag_app:app --reload` if `uvicorn.exe` is blocked.
+
+## Week 7: Input/output validation and reviewed responses
+
+### What was added
+
+- A request schema: `QueryRequest` with one field, `question: str`.
+- Input validation before any model call (`validate_user_input`).
+- Output validation before returning answers (`validate_model_output`).
+- A second model-call step (`review_model_output`) that reviews/improves the first answer.
+- A new endpoint: `POST /query`.
+
+### Why input validation exists
+
+Input validation rejects bad requests early (empty, too short, too long). This prevents unnecessary model calls and gives users clear 400-level error messages.
+
+### Why output validation exists
+
+Model responses can be empty or too weak. Output validation ensures the API does not return obviously bad answers and instead returns controlled 500-level errors.
+
+### Why a second model call is used
+
+The first model call answers the question. The second call reviews the first answer and improves clarity/quality when needed. This “generate then review” pattern is a practical production approach for safer, more consistent responses.
+
+### Week 7 `/query` flow
+
+1. Validate user input (`request.question`).
+2. Generate the first answer with Gemini.
+3. Validate the first answer.
+4. Review/improve the first answer with a second Gemini call.
+5. Validate the reviewed answer.
+6. Return `{ "question": ..., "answer": ... }`.

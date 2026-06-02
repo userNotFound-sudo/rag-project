@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Load environment variables from .env file
 load_dotenv()
@@ -14,6 +15,47 @@ if not api_key:
 
 # Create FastAPI app
 app = FastAPI()
+
+
+class QueryRequest(BaseModel):
+    question: str
+
+
+def validate_user_input(text: str):
+    if text is None or text.strip() == "":
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
+
+    if len(text) < 5:
+        raise HTTPException(status_code=400, detail="Question is too short")
+
+    if len(text) > 500:
+        raise HTTPException(status_code=400, detail="Question is too long")
+
+
+def validate_model_output(text: str):
+    if text is None or text.strip() == "":
+        raise HTTPException(status_code=500, detail="AI returned an empty response")
+
+    if len(text) < 10:
+        raise HTTPException(status_code=500, detail="AI response is too short")
+
+
+def review_model_output(client, original_answer: str):
+    review_prompt = f"""
+You are reviewing an AI-generated response.
+
+Your job:
+- If the response is unclear, incomplete, or poorly written, improve it.
+- If the response is already good, return it unchanged.
+
+AI response to review:
+{original_answer}
+"""
+    review_result = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=review_prompt,
+    )
+    return getattr(review_result, "text", None)
 
 # Root endpoint (basic test)
 @app.get("/")
@@ -72,4 +114,41 @@ def test_gemini():
             "Gemini request failed. Verify GEMINI_API_KEY is set, "
             "the `google-genai` package is installed, "
             "and the server has network access."
+        )
+
+
+@app.post("/query")
+def query_ai(request: QueryRequest):
+    validate_user_input(request.question)
+
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=api_key)
+
+        primary_result = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=request.question,
+        )
+        raw_answer = getattr(primary_result, "text", None)
+
+        validate_model_output(raw_answer)
+
+        reviewed_answer = review_model_output(client, raw_answer)
+        validate_model_output(reviewed_answer)
+
+        return {
+            "question": request.question,
+            "answer": reviewed_answer,
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Query processing failed. Verify GEMINI_API_KEY is set, "
+                "the `google-genai` package is installed, "
+                "and the server has network access."
+            ),
         )
