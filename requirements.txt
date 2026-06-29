@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 streamlit>=1.32.0
 sentence-transformers>=2.7.0
 chromadb>=0.5.0
 google-genai>=1.0.0
 python-dotenv>=1.0.0
+=======
+fastapi
+uvicorn
+python-dotenv
+google-generativeai
+>>>>>>> 167369aac781622f737932053a9ba83694da4ca6

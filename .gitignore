@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Environment variables — never commit your API keys!
 .env
 
@@ -17,3 +18,15 @@ chroma_db/
 # OS files
 .DS_Store
 Thumbs.db
+=======
+# Virtual environments  
+venv/  
+.env/  
+
+# Python cache  
+__pycache__/  
+*.pyc  
+
+# OS files  
+.DS_Store
+>>>>>>> 167369aac781622f737932053a9ba83694da4ca6
