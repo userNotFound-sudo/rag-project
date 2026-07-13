@@ -95,6 +95,15 @@ def handle_api_error(error):
             "The AI service is temporarily unavailable due to rate limits. "
             "Please wait a moment and try again."
         )
+    elif (
+        "503" in error_str
+        or "unavailable" in error_str
+        or "high demand" in error_str
+    ):
+        return (
+            "The AI model is temporarily busy due to high demand. "
+            "Please wait a few seconds and try again."
+        )
     elif "api key" in error_str or "authentication" in error_str or "invalid_api_key" in error_str:
         return (
             "There's a problem with the API key. "

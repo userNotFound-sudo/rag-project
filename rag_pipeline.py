@@ -195,8 +195,18 @@ def run_rag(query, conversation_history=None):
     # ─────────────────────────────────────────────────────────────────────────
 
     # ── Week 10: Core Generation — already complete ──────────────────────────
-    # Week 14: wrap this in try/except and call handle_api_error(e) on failure
-    answer = generate_answer(query, documents, conversation_history)
+    try:
+        answer = generate_answer(query, documents, conversation_history)
+    except Exception as e:
+        error_message = handle_api_error(e)
+        return {
+            "answer": error_message,
+            "sources": documents,
+            "distances": distances,
+            "confidence": 0.0,
+            "grounding": {},
+            "error": error_message,
+        }
 
     # ── Week 13 TODO ──────────────────────────────────────────────────────────
     # Monitor the response quality after generation.
